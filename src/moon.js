@@ -124,13 +124,15 @@ async function init() {
   rod(rover, [.42, .36, -.66], [.42, 1.87, -.66], .07);
   box(rover, .40, 1.88, -.71, .75, .32, .35, mats.ivory);
   for (const x of [.18, .62]) { const lens = part(rover, new THREE.CylinderGeometry(.10, .10, .08, 20), mats.lens, x, 1.89, -.918); lens.rotation.x = Math.PI / 2; }
-  rod(rover, [-.63, .36, .94], [-.63, 1.60, .94], .023, mats.dark);
-  part(rover, new THREE.SphereGeometry(.045, 8, 6), mats.light, -.63, 1.6, .94);
-  const dish = part(rover, new THREE.SphereGeometry(.35, 20, 12, 0, Math.PI * 2, 0, .8), mats.ivory, -.44, 1, .52); dish.rotation.z = -.5;
-  // The spherical cap sits above its origin; mount to its actual back surface.
-  box(rover, -.44, .65, .52, .18, .08, .18, mats.ivory);
-  const dishBack = new THREE.Vector3(0, .35, 0).applyEuler(dish.rotation).add(dish.position);
-  rod(rover, [-.44, .35, .52], dishBack.toArray(), .055, mats.dark);
+  // Both antennas mount to exposed deck edges, clear of the solar panel.
+  box(rover, -.79, .39, 1.28, .06, .08, .06, mats.ivory);
+  rod(rover, [-.79, .39, 1.28], [-.79, 1.60, 1.28], .023, mats.dark);
+  part(rover, new THREE.SphereGeometry(.045, 8, 6), mats.light, -.79, 1.6, 1.28);
+  const dish = part(rover, new THREE.SphereGeometry(.35, 20, 12, 0, Math.PI * 2, 0, .8), mats.ivory, -.64, .8, -.83); dish.rotation.z = .5;
+  // Front-left equipment bay: the bracket meets the cap's actual back surface.
+  box(rover, -.67, .395, -.83, .20, .09, .24, mats.ivory);
+  const dishBack = new THREE.Vector3(0, .32, 0).applyEuler(dish.rotation).add(dish.position);
+  rod(rover, [-.67, .395, -.83], dishBack.toArray(), .055, mats.dark);
   for (const x of [-.59, .59]) box(rover, x, .10, -1.34, .21, .10, .08, mats.light);
   rod(rover, [-.45, -.05, -1.15], [-.57, -.18, -1.9], .05);
   rod(rover, [-.57, -.18, -1.9], [-.22, -.30, -2.05], .045);
