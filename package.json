@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "build": "esbuild src/orbit.js --bundle --minify --format=esm --target=es2022 --outfile=lab/orbit/app.js",
-    "check": "node --check src/orbit.js"
+    "check": "node --check src/orbit.js && node --check src/moon.js && node --check src/lunar-physics.js && node --check src/lunar-visuals.js && node --check src/lunar-quality.js && node --check src/lunar-rocks.js && node --check lab/moon/boot.js && node --check scripts/prepare-moon-home.mjs",
+    "build:moon": "esbuild src/moon.js --bundle --minify --format=esm --target=es2022 --outfile=lab/moon/moon.js && node scripts/prepare-moon-home.mjs",
+    "test:moon": "node --test src/lunar-physics.test.js src/lunar-quality.test.js src/lunar-rocks.test.js"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.3.0",

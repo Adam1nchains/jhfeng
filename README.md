@@ -1,32 +1,19 @@
-# Jiahao Feng
+# jhfeng.com — 月面漫游
 
-Personal website: https://jhfeng.com/
+A desktop-first lunar rover experience, served directly at https://jhfeng.com/ through GitHub Pages.
 
-## Orbit
-
-An interactive sculpture built in Blender and displayed with Three.js.
-
-https://jhfeng.com/lab/orbit/
-
-Drag to orbit, pinch to zoom, switch between three lighting palettes, pause the
-animation, and expand the orbital rings. Arrow keys rotate the view; plus and
-minus zoom. The page respects reduced motion and provides a rendered image if
-WebGL or model loading fails. It pauses rendering in hidden tabs.
-
-The model uses 13 mesh objects and approximately 27,100 triangles. Fonts, model,
-preview and JavaScript are served from this repository. No runtime API or server
-rendering is needed.
+- WASD: drive; mouse drag / wheel: camera; Space: brake; R: reset; Esc: pause.
+- Reach the observation point, stop, then return to the lander.
+- Automatic quality starts conservatively and adapts to observed frame times.
+- Original rocks respond by size: small rocks bounce, medium rocks resist pushing, large rocks remain obstacles.
+- A small loading shell loads the scene only on supported desktop-sized, fine-pointer viewports.
 
 ## Development
 
-Use Node.js 20 or later. Install locked dependencies with `npm ci`, validate syntax
-with `npm run check`, and rebuild the browser bundle with `npm run build`.
-Serve the repository root with a static HTTP server and open `/lab/orbit/`.
+Install dependencies with `npm ci`. Run `npm run check`, `npm run test:moon`, and `npm run build:moon`.
 
-`src/orbit.js` is the editable JavaScript source; `lab/orbit/app.js` is the built
-bundle. The `.nojekyll` file allows GitHub Pages to serve these static files
-directly. The custom domain is recorded in `CNAME`.
+The Moon build bundles `src/moon.js`, versions its asset references, and generates both the root homepage and `/lab/moon/` entry. Serve the repository root with any static HTTP server for local previews.
 
-Font license files are included in `lab/orbit/assets/fonts/`; Three.js license
-information is retained in the generated bundle. The sculpture is original work
-created for this website.
+GitHub Pages publishes `main` at the repository root. `CNAME` retains the custom domain, and `.nojekyll` serves the static assets directly. No server-side renderer, model API, or account is required for visitors. Actual performance depends on the visitor's hardware and browser.
+
+The earlier Orbit experiment remains at `/lab/orbit/`.
