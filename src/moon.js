@@ -3,6 +3,7 @@ import { SIZE, GRID, BASE, TARGET, ROCKS, WHEELS, rawHeight, heightAt, seededRan
 import { regolithTextures, panelTexture, foilTexture, outdoorReflections, batchParts } from './lunar-visuals.js';
 import { PROFILES, QualityBudget, pixelRatioFor } from './lunar-quality.js';
 import { RockField } from './lunar-rocks.js';
+import { DustField } from './lunar-dust.js';
 
 const $ = s => document.querySelector(s), canvas = $('#moon');
 const desktop = matchMedia('(min-width: 820px) and (pointer: fine)');
@@ -168,6 +169,41 @@ async function init() {
   contactGradient.addColorStop(0, '#00000099'); contactGradient.addColorStop(1, '#00000000'); contactCtx.fillStyle = contactGradient; contactCtx.fillRect(0, 0, 64, 64);
   const contact = new THREE.Mesh(new THREE.PlaneGeometry(3.9, 4.7), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(contactCanvas), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 })); scene.add(contact);
 
+  const dustField = new DustField(heightAt, seededRandom(829));
+  const dustPositions = new Float32Array(56 * 3), dustLooks = new Float32Array(56 * 2);
+  const dustGeometry = new THREE.BufferGeometry();
+  dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3).setUsage(THREE.DynamicDrawUsage));
+  dustGeometry.setAttribute('appearance', new THREE.BufferAttribute(dustLooks, 2).setUsage(THREE.DynamicDrawUsage));
+  dustGeometry.setDrawRange(0, 0);
+  const dustMaterial = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false,
+    uniforms: { viewportHeight: { value: 1 }, maxPointSize: { value: 18 } },
+    vertexShader: `attribute vec2 appearance; uniform float viewportHeight; uniform float maxPointSize; varying float alpha;
+      void main() { vec4 view = modelViewMatrix * vec4(position, 1.0); alpha = appearance.y;
+        gl_Position = projectionMatrix * view;
+        gl_PointSize = clamp(appearance.x * viewportHeight * projectionMatrix[1][1] / max(.1, -2.0 * view.z), 1.0, maxPointSize); }`,
+    fragmentShader: `varying float alpha;
+      void main() { float radius = length(gl_PointCoord - .5) * 2.0;
+        if (radius > 1.0) discard;
+        gl_FragColor = vec4(.64, .63, .60, alpha * (1.0 - smoothstep(.12, 1.0, radius)));
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`
+  });
+  const dust = new THREE.Points(dustGeometry, dustMaterial); dust.frustumCulled = false; dust.visible = false; scene.add(dust);
+  let dustCount = 0;
+  function syncDust() {
+    dustCount = 0;
+    for (let i = 0; i < dustField.limit; i++) {
+      const p = dustField.particles[i]; if (!p.life) continue;
+      dustPositions[dustCount * 3] = p.x; dustPositions[dustCount * 3 + 1] = p.y; dustPositions[dustCount * 3 + 2] = p.z;
+      dustLooks[dustCount * 2] = p.size;
+      dustLooks[dustCount * 2 + 1] = .42 * Math.min(1, p.age * 25) * (1 - p.age / p.life);
+      dustCount++;
+    }
+    dust.visible = dustCount > 0; dustGeometry.setDrawRange(0, dustCount);
+    if (dustCount) { dustGeometry.attributes.position.needsUpdate = true; dustGeometry.attributes.appearance.needsUpdate = true; }
+  }
   const coarseRocks = new THREE.IcosahedronGeometry(1, 1);
   function applyQuality() {
     const profile = PROFILES[budget.tier], low = budget.tier === 0;
@@ -179,6 +215,9 @@ async function init() {
     sun.shadow.needsUpdate = true;
     pebbles.count = profile.pebbles; rockMesh.geometry = low ? coarseRocks : rockGeo;
     rockField.setBudget(budget.scale < .7 ? 2 : profile.activeRocks); syncRocks();
+    dustField.setBudget(profile.dust); syncDust();
+    dustMaterial.uniforms.viewportHeight.value = innerHeight * renderer.getPixelRatio();
+    dustMaterial.uniforms.maxPointSize.value = 18 * renderer.getPixelRatio();
     for (const material of [surface, rockMaterial]) { material.normalMap = low ? null : textures.normalMap; material.needsUpdate = true; }
     contact.visible = low;
     scene.traverse(obj => { if (obj.material) for (const material of [obj.material].flat()) material.needsUpdate = true; });
@@ -217,7 +256,7 @@ async function init() {
     if (canvas.dataset.telemetry) canvas.dataset.telemetry = JSON.stringify({ ...JSON.parse(canvas.dataset.telemetry), paused });
     if (!value) canvas.focus({ preventScroll: true });
   }
-  function reset() { const distance = state.distance; state = createState(); state.distance = distance; trackDistance = distance; cameraYaw = .28; cameraPitch = .34; dockTime = 0; updateCamera(1, true); updateRover(); renderer.render(scene, camera); clearKeys(); notice('已回到着陆区'); }
+  function reset() { const distance = state.distance; state = createState(); dustField.clear(); syncDust(); state.distance = distance; trackDistance = distance; cameraYaw = .28; cameraPitch = .34; dockTime = 0; updateCamera(1, true); updateRover(); renderer.render(scene, camera); clearKeys(); notice('已回到着陆区'); }
   $('#pause').onclick = () => setPause(!paused); $('#resume').onclick = () => setPause(false); $('#reset').onclick = reset;
   let helpWasPaused = false;
   $('#help').onclick = () => { helpWasPaused = paused; setPause(true); $('#help-dialog').showModal(); };
@@ -325,7 +364,8 @@ async function init() {
     if (!paused) {
       accumulator += dt;
       const input = { forward: keys.has('KeyW') || keys.has('ArrowUp'), reverse: keys.has('KeyS') || keys.has('ArrowDown'), left: keys.has('KeyA') || keys.has('ArrowLeft'), right: keys.has('KeyD') || keys.has('ArrowRight'), brake: keys.has('Space') };
-      while (accumulator >= fixed) { stepDrive(state, input, fixed, collisionObjects, rockField); rockField.step(fixed, state); accumulator -= fixed; }
+      while (accumulator >= fixed) { stepDrive(state, input, fixed, collisionObjects, rockField); rockField.step(fixed, state); dustField.step(fixed, state); accumulator -= fixed; }
+      syncDust();
       syncRocks();
       updateRover(); markTracks(state); updateCamera(dt); missionTick(dt);
     } else accumulator = 0;
@@ -347,7 +387,7 @@ async function init() {
     if (uiTimer > .15) {
       uiTimer = 0; $('#speed').textContent = (Math.abs(state.speed) * 3.6).toFixed(1);
       updateMap(); const sorted = [...frames].sort((a, b) => a - b);
-      canvas.dataset.telemetry = JSON.stringify({ ready: true, paused, mission, x: +state.x.toFixed(2), z: +state.z.toFixed(2), speed: +state.speed.toFixed(2), distance: +state.distance.toFixed(2), pitch: +state.pitch.toFixed(3), roll: +state.roll.toFixed(3), cameraYaw: +cameraYaw.toFixed(3), cameraDistance, fps: Math.round(1000 / (frames.reduce((a, b) => a + b, 0) / frames.length)), p95Ms: +(sorted[Math.floor(sorted.length * .95)] || 0).toFixed(1), drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, samples: frames.length, completionTime, qualityMode, quality: PROFILES[budget.tier].name, pixelRatio: +renderer.getPixelRatio().toFixed(2), shadows: renderer.shadowMap.enabled, qualityChanges, activeRocks: rockField.active.size, rockLimit: rockField.limit, rockHits: rockField.hits, peakRocks: rockField.peak });
+      canvas.dataset.telemetry = JSON.stringify({ ready: true, paused, mission, x: +state.x.toFixed(2), z: +state.z.toFixed(2), speed: +state.speed.toFixed(2), distance: +state.distance.toFixed(2), pitch: +state.pitch.toFixed(3), roll: +state.roll.toFixed(3), cameraYaw: +cameraYaw.toFixed(3), cameraDistance, fps: Math.round(1000 / (frames.reduce((a, b) => a + b, 0) / frames.length)), p95Ms: +(sorted[Math.floor(sorted.length * .95)] || 0).toFixed(1), drawCalls: renderer.info.render.calls, triangles: renderer.info.render.triangles, samples: frames.length, completionTime, qualityMode, quality: PROFILES[budget.tier].name, pixelRatio: +renderer.getPixelRatio().toFixed(2), shadows: renderer.shadowMap.enabled, qualityChanges, activeRocks: rockField.active.size, rockLimit: rockField.limit, rockHits: rockField.hits, peakRocks: rockField.peak, dustParticles: dustCount, dustLimit: dustField.limit });
     }
   }
   requestAnimationFrame(animate);

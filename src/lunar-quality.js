@@ -1,7 +1,7 @@
 export const PROFILES = [
-  { name: 'low', ratio: 1, pixels: 1_000_000, shadows: false, shadowSize: 1024, pebbles: 260, activeRocks: 4 },
-  { name: 'balanced', ratio: 1.25, pixels: 1_800_000, shadows: true, shadowSize: 1024, pebbles: 650, activeRocks: 12 },
-  { name: 'high', ratio: 2, pixels: 3_200_000, shadows: true, shadowSize: 2048, pebbles: 950, activeRocks: 20 }
+  { name: 'low', ratio: 1, pixels: 1_000_000, shadows: false, shadowSize: 1024, pebbles: 260, activeRocks: 4, dust: 0 },
+  { name: 'balanced', ratio: 1.25, pixels: 1_800_000, shadows: true, shadowSize: 1024, pebbles: 650, activeRocks: 12, dust: 32 },
+  { name: 'high', ratio: 2, pixels: 3_200_000, shadows: true, shadowSize: 2048, pebbles: 950, activeRocks: 20, dust: 56 }
 ];
 export function pixelRatioFor(profile, width, height, dpr, scale = 1) {
   return Math.min(dpr, profile.ratio * scale, Math.sqrt(profile.pixels / Math.max(1, width * height)) * scale);
