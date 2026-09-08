@@ -117,14 +117,19 @@ async function init() {
   box(rover, 0, .29, 0, 1.64, .12, 2.72, mats.ivory);
   box(rover, 0, -.28, .25, 1.24, .18, 1.75, mats.dark);
   box(rover, 0, .56, .53, 1.48, .1, 1.44, mats.ivory);
+  for (const x of [-.55, .55]) box(rover, x, .43, .53, .09, .20, 1.16, mats.dark);
   box(rover, 0, .617, .535, 1.423, .015, 1.314, mats.panel);
-  box(rover, 0, .60, -.83, .73, .47, .57, mats.ivory);
+  box(rover, 0, .585, -.83, .73, .47, .57, mats.ivory);
   rod(rover, [.42, .36, -.66], [.42, 1.87, -.66], .07);
   box(rover, .40, 1.88, -.71, .75, .32, .35, mats.ivory);
   for (const x of [.18, .62]) { const lens = part(rover, new THREE.CylinderGeometry(.10, .10, .08, 20), mats.lens, x, 1.89, -.918); lens.rotation.x = Math.PI / 2; }
   rod(rover, [-.63, .36, .94], [-.63, 1.60, .94], .023, mats.dark);
   part(rover, new THREE.SphereGeometry(.045, 8, 6), mats.light, -.63, 1.6, .94);
   const dish = part(rover, new THREE.SphereGeometry(.35, 20, 12, 0, Math.PI * 2, 0, .8), mats.ivory, -.44, 1, .52); dish.rotation.z = -.5;
+  // The spherical cap sits above its origin; mount to its actual back surface.
+  box(rover, -.44, .65, .52, .18, .08, .18, mats.ivory);
+  const dishBack = new THREE.Vector3(0, .35, 0).applyEuler(dish.rotation).add(dish.position);
+  rod(rover, [-.44, .35, .52], dishBack.toArray(), .055, mats.dark);
   for (const x of [-.59, .59]) box(rover, x, .10, -1.34, .21, .10, .08, mats.light);
   rod(rover, [-.45, -.05, -1.15], [-.57, -.18, -1.9], .05);
   rod(rover, [-.57, -.18, -1.9], [-.22, -.30, -2.05], .045);

@@ -12,6 +12,7 @@ export class RockField {
   sleep(r) {
     r.y = this.heightAt(r.x, r.z) + r.r * .24;
     r.vx = r.vy = r.vz = r.sx = r.sy = r.sz = 0;
+    if (r.kind === 'large') { r.rx = .15; r.rz = .12; }
     r.active = false; this.active.delete(r.id); this.dirty.add(r.id);
   }
   setBudget(limit) {
@@ -25,8 +26,8 @@ export class RockField {
     r.active = true; r.age = 0; this.active.add(r.id); this.peak = Math.max(this.peak, this.active.size);
   }
   resolveContact(rover, rock, dt) {
-    // Fixed landmarks have no kind; large rocks keep the normal obstacle response.
-    if (!rock.kind || rock.kind === 'large') return false;
+    // Fixed landmarks remain immovable; every original rock has a size response.
+    if (!rock.kind) return false;
     if (rock.active && rock.y - this.heightAt(rock.x, rock.z) > 1.6) return true;
     const dx = rock.x - rover.x, dz = rock.z - rover.z, d = Math.hypot(dx, dz), reach = rock.r + 1.25;
     if (d >= reach) return true;
@@ -35,6 +36,22 @@ export class RockField {
     const sign = Math.sign(rover.speed) || 1, fx = -Math.sin(rover.yaw) * sign, fz = -Math.cos(rover.yaw) * sign;
     const nx = d > .001 ? dx / d : fx, nz = d > .001 ? dz / d : fz;
     const speed = Math.abs(rover.speed), approach = speed * (fx * nx + fz * nz);
+    if (rock.kind === 'large') {
+      // Resolve penetration fully; only a real impact can overcome static friction.
+      // Sustained throttle at rest cannot repeatedly pump a boulder down the road.
+      rover.x -= nx * (reach - d); rover.z -= nz * (reach - d);
+      if (approach <= .02) return true;
+      rover.speed *= Math.max(.08, 1 - .92 * approach / speed);
+      if (approach < .35 || this.time - rock.lastHit < .65) return true;
+      const mobility = Math.min(1, (1.1 / rock.r) ** 3);
+      const kick = Math.min(1.2, approach * .35) * mobility;
+      rock.vx = nx * kick; rock.vz = nz * kick;
+      const tilt = Math.min(.7, approach * .22) * mobility;
+      rock.sx = -nz * tilt; rock.sz = nx * tilt;
+      rock.lastHit = this.time; rock.age = 0; this.hits++;
+      this.activate(rock); this.dirty.add(rock.id);
+      return true;
+    }
     // Allow backing away without repeatedly re-launching the same object.
     if (approach <= .02) return true;
     const small = rock.kind === 'small', mobility = small ? 1 : .38;
@@ -60,6 +77,21 @@ export class RockField {
   step(dt, rover) {
     this.time += dt;
     for (const id of this.active) {
+      const heavy = this.rocks[id];
+      if (heavy.kind === 'large') {
+        heavy.age += dt;
+        heavy.x += heavy.vx * dt; heavy.z += heavy.vz * dt;
+        heavy.y = this.heightAt(heavy.x, heavy.z) + heavy.r * .24;
+        heavy.vx *= Math.exp(-5 * dt); heavy.vz *= Math.exp(-5 * dt);
+        // A damped rocking response settles without lifting the entire boulder.
+        heavy.sx += (-28 * (heavy.rx - .15) - 9 * heavy.sx) * dt;
+        heavy.sz += (-28 * (heavy.rz - .12) - 9 * heavy.sz) * dt;
+        heavy.rx += heavy.sx * dt; heavy.rz += heavy.sz * dt;
+        if (heavy.age > 3 || (Math.hypot(heavy.vx, heavy.vz, heavy.sx, heavy.sz) < .003 &&
+          Math.hypot(heavy.rx - .15, heavy.rz - .12) < .001)) this.sleep(heavy);
+        else this.dirty.add(id);
+        continue;
+      }
       const r = this.rocks[id]; r.age += dt; r.vy -= 1.62 * dt;
       r.x += r.vx * dt; r.y += r.vy * dt; r.z += r.vz * dt;
       r.rx += r.sx * dt; r.ry += r.sy * dt; r.rz += r.sz * dt;

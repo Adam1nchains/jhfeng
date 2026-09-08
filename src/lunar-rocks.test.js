@@ -38,10 +38,32 @@ test('medium rocks move with resistance and stay near the surface', () => {
   assert.ok(r.z < 42); assert.ok(f.hits > 0); assert.ok(lift < .3);
   assert.ok(s.speed > .1 && s.speed < 2);
 });
-test('large rocks still block passage and cannot be launched', () => {
+test('large rocks shift slightly, resist sustained pushing and cannot be launched', () => {
   const { s, f, r } = setup(1.7); run(s, f, 6);
-  assert.equal(r.x, 0); assert.equal(r.z, 43); assert.equal(f.hits, 0);
-  assert.ok(s.z >= 43 + r.r + 1.249); assert.ok(s.speed < .1);
+  assert.equal(r.x, 0); assert.ok(43 - r.z > .01 && 43 - r.z < .25); assert.ok(f.hits > 0);
+  assert.ok(s.z >= r.z + r.r + 1.249); assert.ok(s.speed < .1);
+  assert.equal(r.y, heightAt(r.x, r.z) + r.r * .24);
+  const settledZ = r.z, hits = f.hits; run(s, f, 12);
+  assert.equal(r.z, settledZ); assert.equal(f.hits, hits); assert.equal(f.active.size, 0);
+});
+test('heavy impact response scales with mass and speed, rocks settle and can be hit again', () => {
+  function impact(radius, speed) {
+    const f = new RockField([{ x: 0, z: 0, r: radius }], () => 0), r = f.rocks[0];
+    const s = { ...createState(), x: 0, z: radius + 1.2, y: 1.06, speed };
+    f.resolveContact(s, r, dt); let tilt = 0;
+    for (let i = 0; i < 4 / dt; i++) {
+      f.step(dt, s); tilt = Math.max(tilt, Math.abs(r.rx - .15));
+      assert.equal(r.y, radius * .24); assert.ok(f.active.size <= f.limit);
+    }
+    assert.ok(tilt > .001 && tilt < .08); assert.equal(f.active.size, 0);
+    assert.equal(r.rx, .15); f.takeDirty(); f.step(dt, s); assert.deepEqual(f.takeDirty(), []);
+    const displacement = -r.z;
+    s.z = r.z + radius + 1.2; s.speed = speed;
+    f.resolveContact(s, r, dt); assert.equal(f.hits, 2);
+    return displacement;
+  }
+  assert.ok(impact(1.2, 5) > impact(2.4, 5) * 4);
+  assert.ok(impact(1.7, 5) > impact(1.7, 1) * 2);
 });
 test('fixed landmarks remain solid independently of movable rock classification', () => {
   const s = createState(), f = new RockField([], heightAt), target = { x: 0, z: 43, r: .6 };
