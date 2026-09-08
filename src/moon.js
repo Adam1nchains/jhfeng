@@ -1,9 +1,10 @@
 import * as THREE from 'three';
-import { SIZE, GRID, BASE, TARGET, ROCKS, WHEELS, rawHeight, heightAt, seededRandom, createState, contacts, stepDrive } from './lunar-physics.js';
-import { regolithTextures, panelTexture, foilTexture, outdoorReflections, batchParts } from './lunar-visuals.js';
+import { SIZE, GRID, START, BASE, TARGET, ROCKS, WHEELS, rawHeight, heightAt, seededRandom, createState, contacts, stepDrive } from './lunar-physics.js';
+import { regolithTextures, panelTexture, foilTexture, outdoorReflections, batchParts, createRockGeometry } from './lunar-visuals.js';
 import { PROFILES, QualityBudget, pixelRatioFor } from './lunar-quality.js';
 import { RockField } from './lunar-rocks.js';
 import { DustField } from './lunar-dust.js';
+import { createHiddenSuit, SUIT_ROCK_INDEX } from './lunar-suit.js';
 
 const $ = s => document.querySelector(s), canvas = $('#moon');
 const desktop = matchMedia('(min-width: 820px) and (pointer: fine)');
@@ -67,12 +68,7 @@ async function init() {
   horizonGeo.computeVertexNormals();
   scene.add(new THREE.Mesh(horizonGeo, new THREE.MeshStandardMaterial({ color: 0x64696e, roughness: 1 })));
 
-  const rockGeo = new THREE.IcosahedronGeometry(1, 2), rp = rockGeo.attributes.position;
-  for (let i = 0; i < rp.count; i++) {
-    const x = rp.getX(i), y = rp.getY(i), z = rp.getZ(i), v = 1 + .13 * Math.sin(x * 16 + y * 23 + z * 11);
-    rp.setXYZ(i, x * v, y * v, z * v);
-  }
-  rockGeo.computeVertexNormals();
+  const rockGeo = createRockGeometry();
   const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x85898d, roughness: 1, flatShading: true, normalMap: textures.normalMap, normalScale: new THREE.Vector2(.22, .22) });
   const rockMesh = new THREE.InstancedMesh(rockGeo, rockMaterial, ROCKS.length); rockMesh.castShadow = rockMesh.receiveShadow = true;
   const dummy = new THREE.Object3D();
@@ -86,8 +82,11 @@ async function init() {
     dummy.updateMatrix(); rockMesh.setMatrixAt(id, dummy.matrix);
   }
   rockField.rocks.forEach(r => writeRock(r.id)); scene.add(rockMesh);
+  const hiddenSuit = createHiddenSuit(rockField.rocks[SUIT_ROCK_INDEX], rockGeo, heightAt, START);
+  hiddenSuit.group.visible = false; scene.add(hiddenSuit.group); collisionObjects.push(...hiddenSuit.colliders);
   function syncRocks() {
     const dirty = rockField.takeDirty(); if (!dirty.length) return;
+    if (dirty.includes(SUIT_ROCK_INDEX)) hiddenSuit.sync();
     rockMesh.instanceMatrix.clearUpdateRanges();
     for (const id of dirty) { writeRock(id); rockMesh.instanceMatrix.addUpdateRange(id * 16, 16); }
     rockMesh.instanceMatrix.needsUpdate = true;
@@ -369,6 +368,7 @@ async function init() {
       while (accumulator >= fixed) { stepDrive(state, input, fixed, collisionObjects, rockField); rockField.step(fixed, state); dustField.step(fixed, state); accumulator -= fixed; }
       syncDust();
       syncRocks();
+      hiddenSuit.group.visible = Math.hypot(state.x - hiddenSuit.group.position.x, state.z - hiddenSuit.group.position.z) < 70;
       updateRover(); markTracks(state); updateCamera(dt); missionTick(dt);
     } else accumulator = 0;
     if (nowSeconds > noticeTimer) $('#notice').classList.remove('visible');

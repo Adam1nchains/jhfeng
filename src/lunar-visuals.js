@@ -99,3 +99,13 @@ export function batchParts(group, excluded = new Set()) {
     meshes.forEach(m => group.remove(m)); group.add(combined);
   }
 }
+
+export function createRockGeometry() {
+  const rockGeo = new THREE.IcosahedronGeometry(1, 2), rp = rockGeo.attributes.position;
+  for (let i = 0; i < rp.count; i++) {
+    const x = rp.getX(i), y = rp.getY(i), z = rp.getZ(i), v = 1 + .13 * Math.sin(x * 16 + y * 23 + z * 11);
+    rp.setXYZ(i, x * v, y * v, z * v);
+  }
+  rockGeo.computeVertexNormals();
+  return rockGeo;
+}
