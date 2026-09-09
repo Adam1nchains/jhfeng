@@ -42,6 +42,14 @@ test('opaque visor, limited static meshes, and attached colliders stay aligned w
   const { rock, suit } = setup();
   const meshes = suit.group.children.filter(m => m.isMesh);
   assert.ok(meshes.length <= 4);
+  const triangles = meshes.reduce((sum, m) => sum + (m.geometry.index?.count ?? m.geometry.attributes.position.count) / 3, 0);
+  assert.ok(triangles <= 20000, `suit exceeds geometry budget: ${triangles} triangles`);
+  const woven = meshes.filter(m => m.material.bumpMap);
+  assert.equal(woven.length, 2);
+  suit.setDetail(false);
+  assert.ok(woven.every(m => m.material.bumpMap === null));
+  suit.setDetail(true);
+  assert.ok(woven.every(m => m.material.bumpMap?.image.width === 128));
   const visor = meshes.find(m => m.material.metalness > .9);
   assert.ok(visor); assert.equal(visor.material.transparent, false); assert.equal(visor.material.opacity, 1);
   const old = suit.group.position.clone(), before = suit.colliders.map(c => ({...c}));

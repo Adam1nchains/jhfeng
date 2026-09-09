@@ -208,6 +208,7 @@ async function init() {
   const coarseRocks = new THREE.IcosahedronGeometry(1, 1);
   function applyQuality() {
     const profile = PROFILES[budget.tier], low = budget.tier === 0;
+    hiddenSuit.setDetail(!low);
     renderer.setPixelRatio(pixelRatioFor(profile, innerWidth, innerHeight, devicePixelRatio, budget.scale));
     renderer.shadowMap.enabled = profile.shadows;
     if (sun.shadow.mapSize.x !== profile.shadowSize) {
