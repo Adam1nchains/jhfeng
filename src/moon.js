@@ -16,9 +16,9 @@ function deviceCheck() {
 desktop.addEventListener('change', deviceCheck); deviceCheck();
 function fail(error) {
   console.error(error); $('#loading').hidden = false;
-  $('#loading h2').textContent = '月面环境暂时未能启动';
+  $('#loading h2').textContent = 'Could not start the lunar scene';
   $('#load-progress').hidden = true;
-  $('#load-copy').textContent = '请使用支持 WebGL 2 的电脑浏览器，开启硬件加速后刷新重试。';
+  $('#load-copy').textContent = 'Use a desktop browser with WebGL 2 and hardware acceleration, then refresh.';
 }
 
 async function init() {
@@ -251,13 +251,13 @@ async function init() {
   function notice(text, duration = 4) { $('#notice').textContent = text; $('#notice').classList.add('visible'); noticeTimer = nowSeconds + duration; }
   function setPause(value) {
     paused = value; clearKeys(); dragging = false;
-    $('#pause-screen').hidden = !paused; $('#pause').setAttribute('aria-label', paused ? '继续' : '暂停');
+    $('#pause-screen').hidden = !paused; $('#pause').setAttribute('aria-label', paused ? 'Resume' : 'Pause');
     $('#pause path').setAttribute('d', paused ? 'M8 5l11 7-11 7z' : 'M8 5v14M16 5v14');
     qualityFrames = []; qualityElapsed = 0; qualityWarmup = 2;
     if (canvas.dataset.telemetry) canvas.dataset.telemetry = JSON.stringify({ ...JSON.parse(canvas.dataset.telemetry), paused });
     if (!value) canvas.focus({ preventScroll: true });
   }
-  function reset() { const distance = state.distance; state = createState(); dustField.clear(); syncDust(); state.distance = distance; trackDistance = distance; cameraYaw = .28; cameraPitch = .34; dockTime = 0; updateCamera(1, true); updateRover(); renderer.render(scene, camera); clearKeys(); notice('已回到着陆区'); }
+  function reset() { const distance = state.distance; state = createState(); dustField.clear(); syncDust(); state.distance = distance; trackDistance = distance; cameraYaw = .28; cameraPitch = .34; dockTime = 0; updateCamera(1, true); updateRover(); renderer.render(scene, camera); clearKeys(); notice('Back at the landing site'); }
   $('#pause').onclick = () => setPause(!paused); $('#resume').onclick = () => setPause(false); $('#reset').onclick = reset;
   let helpWasPaused = false;
   $('#help').onclick = () => { helpWasPaused = paused; setPause(true); $('#help-dialog').showModal(); };
@@ -336,13 +336,13 @@ async function init() {
       dockTime += dt;
       if (dockTime > 1.3) {
         mission++; dockTime = 0;
-        if (mission === 1) { $('#mission-title').textContent = '着陆器'; notice('观测完成，返回着陆器', 4); }
-        else { completionTime = nowSeconds; $('#mission-title').textContent = '自由探索'; $('#destination-distance').hidden = true; notice('探索完成', 3); }
+        if (mission === 1) { $('#mission-title').textContent = 'Lander'; notice('Survey complete. Return to the lander.', 4); }
+        else { completionTime = nowSeconds; $('#mission-title').textContent = 'Free roam'; $('#destination-distance').hidden = true; notice('Exploration complete', 3); }
       }
     } else dockTime = 0;
-    if (state.boundary) notice('已到边界，请返回', 1);
-    else if (state.collision) notice('请倒车绕行', 1);
-    else if (mission < 2 && d < (mission === 0 ? 7 : 9) && Math.abs(state.speed) >= .45) notice('按空格停稳', 1);
+    if (state.boundary) notice('Edge of the area. Turn back.', 1);
+    else if (state.collision) notice('Reverse and go around.', 1);
+    else if (mission < 2 && d < (mission === 0 ? 7 : 9) && Math.abs(state.speed) >= .45) notice('Hold Space to stop.', 1);
     $('#distance').textContent = Math.round(d);
     disc.position.set(dest.x, heightAt(dest.x, dest.z) + .1, dest.z);
     projected.set(dest.x, heightAt(dest.x, dest.z) + 4.8, dest.z);

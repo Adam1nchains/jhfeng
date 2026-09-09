@@ -1,43 +1,43 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#eeeae1">
-  <meta name="description" content="Jiahao Feng 的三维实验：在旋转、光影和轨道之间，发现新的视角。">
+  <meta name="description" content="A 3D experiment by Jiahao Feng. Discover new perspectives through motion, light, and orbits.">
   <title>Orbit — Jiahao Feng</title>
   <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=138f1d5ef2a5"></script>
 </head>
 <body>
   <header>
-    <a class="identity" href="/" aria-label="Jiahao Feng 首页"><span class="monogram">jf.</span><span>JIAHAO FENG</span></a>
+    <a class="identity" href="/" aria-label="Jiahao Feng home"><span class="monogram">jf.</span><span>JIAHAO FENG</span></a>
     <span class="edition"><i></i> PLAYGROUND / 001</span>
-    <a class="home-link" href="/">回到首页 <span>↗</span></a>
+    <a class="home-link" href="/">Back home <span>↗</span></a>
   </header>
   <main>
     <section class="intro" aria-labelledby="title">
       <p class="eyebrow">AN EXPERIMENT IN MOTION</p>
       <h1 id="title">Ideas<br> in <em>orbit.</em></h1>
-      <div class="intro-bottom"><span class="small-rule"></span><p>让想法转起来。<br>换一个角度，发现新的联系。</p></div>
+      <div class="intro-bottom"><span class="small-rule"></span><p>Set ideas in motion.<br>Find new connections from another angle.</p></div>
     </section>
-    <section class="stage" aria-label="可交互的三维轨道雕塑">
+    <section class="stage" aria-label="Interactive 3D orbital sculpture">
       <div class="stage-line stage-line-one"></div><div class="stage-line stage-line-two"></div>
       <span class="axis-mark axis-top">Y +</span><span class="axis-mark axis-bottom">OBJECT / 01</span>
-      <img class="poster" id="poster" src="./assets/orbit-poster.png" alt="金属环围绕青绿色球体交错旋转，悬浮在圆形石台上。" width="1000" height="1000">
-      <canvas id="scene" tabindex="0" aria-label="轨道雕塑。拖动旋转，双指缩放；键盘方向键旋转，加减键缩放。"></canvas>
-      <p id="load-status" class="load-status" role="status">正在布置展台…</p>
-      <span class="hint" id="gesture-hint">↔ 拖动，换个角度</span>
-      <button class="reset-view" id="reset-view" aria-label="恢复初始视角" title="恢复初始视角">↺</button>
+      <img class="poster" id="poster" src="./assets/orbit-poster.png" alt="Metal rings orbit a teal sphere, floating above a round stone pedestal." width="1000" height="1000">
+      <canvas id="scene" tabindex="0" aria-label="Orbital sculpture. Drag or use arrow keys to rotate; pinch or use plus and minus to zoom."></canvas>
+      <p id="load-status" class="load-status" role="status">Preparing the scene…</p>
+      <span class="hint" id="gesture-hint">↔ Drag to explore</span>
+      <button class="reset-view" id="reset-view" aria-label="Reset view" title="Reset view">↺</button>
     </section>
     <aside class="specimen"><span class="specimen-number">01 — 03</span><span class="specimen-line"></span><p>FORM<br>LIGHT<br>MOTION</p></aside>
-    <section class="control-bar" aria-label="雕塑控制">
-      <div class="piece-caption"><span class="caption-index">001</span><div><h2>思绪的轨道</h2><p>ORBITAL STUDY · 2026</p></div></div>
-      <div class="light-options" role="group" aria-label="灯光氛围"><span class="control-label">LIGHT</span><button class="swatch is-active" data-light="day" aria-label="日光" aria-pressed="true"><i class="day-dot"></i><span>日光</span></button><button class="swatch" data-light="dusk" aria-label="暮色" aria-pressed="false"><i class="dusk-dot"></i><span>暮色</span></button><button class="swatch" data-light="night" aria-label="夜航" aria-pressed="false"><i class="night-dot"></i><span>夜航</span></button></div>
-      <div class="motion-options"><button id="motion" aria-pressed="true"><span class="motion-icon">Ⅱ</span><span class="motion-label">暂停</span></button><button id="unfold" aria-pressed="false">展开轨道 <span>↗</span></button></div>
+    <section class="control-bar" aria-label="Sculpture controls">
+      <div class="piece-caption"><span class="caption-index">001</span><div><h2>Orbits of Thought</h2><p>ORBITAL STUDY · 2026</p></div></div>
+      <div class="light-options" role="group" aria-label="Lighting"><span class="control-label">LIGHT</span><button class="swatch is-active" data-light="day" aria-label="Daylight" aria-pressed="true"><i class="day-dot"></i><span>Daylight</span></button><button class="swatch" data-light="dusk" aria-label="Dusk" aria-pressed="false"><i class="dusk-dot"></i><span>Dusk</span></button><button class="swatch" data-light="night" aria-label="Night" aria-pressed="false"><i class="night-dot"></i><span>Night</span></button></div>
+      <div class="motion-options"><button id="motion" aria-pressed="true"><span class="motion-icon">Ⅱ</span><span class="motion-label">Pause</span></button><button id="unfold" aria-pressed="false">Expand orbits <span>↗</span></button></div>
     </section>
   </main>
-  <footer><span>A LITTLE SPACE FOR CURIOSITY.</span><span>建于想象 · 在此刻转动 <i>✳</i></span></footer>
-  <noscript><p class="noscript">开启 JavaScript 后可以旋转雕塑、切换灯光。目前显示作品静态预览。</p></noscript>
+  <footer><span>A LITTLE SPACE FOR CURIOSITY.</span><span>Imagined here · In motion now <i>✳</i></span></footer>
+  <noscript><p class="noscript">Enable JavaScript to rotate the sculpture and change the lighting. A still preview is shown for now.</p></noscript>
 </body>
 </html>

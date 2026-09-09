@@ -25,7 +25,7 @@ Object.defineProperty(window, '__orbitDiagnostics', { get() {
 function updateMotionButton() {
   motionButton.setAttribute('aria-pressed',String(state.playing));
   motionButton.querySelector('.motion-icon').textContent=state.playing?'Ⅱ':'▷';
-  motionButton.querySelector('.motion-label').textContent=state.playing?'暂停':'播放';
+  motionButton.querySelector('.motion-label').textContent=state.playing?'Pause':'Play';
 }
 function fallback(message) {
   state.failed=true; state.ready=false;
@@ -33,7 +33,7 @@ function fallback(message) {
   status.textContent=message;
   status.style.top='auto';status.style.bottom='44px';
   canvas.style.display='none';
-  document.querySelector('#gesture-hint').textContent='作品静态预览';
+  document.querySelector('#gesture-hint').textContent='Still preview';
   for (const b of document.querySelectorAll('.control-bar button, #reset-view')) b.disabled=true;
 }
 updateMotionButton();
@@ -78,7 +78,7 @@ try {
   let sculpt, rings=[], phase=0, previous=0, expansion=0;
   const localAxis=new THREE.Vector3(1,0,0), spin=new THREE.Quaternion();
   const loadStart=performance.now();
-  const loadingTimeout=setTimeout(()=>{if(!state.ready)status.textContent='作品仍在加载，稍等片刻…';},12000);
+  const loadingTimeout=setTimeout(()=>{if(!state.ready)status.textContent='Still loading. One moment…';},12000);
   new GLTFLoader().load('./assets/orbit.glb',gltf=>{
     clearTimeout(loadingTimeout);
     sculpt=gltf.scene;
@@ -89,9 +89,9 @@ try {
     scene.add(sculpt);
     metrics.modelLoadMs=Math.round(performance.now()-loadStart);
     renderer.render(scene,camera);
-    state.ready=true;stage.classList.add('ready');status.textContent='作品已就绪';
+    state.ready=true;stage.classList.add('ready');status.textContent='Ready';
     metrics.frameIntervals=[];previous=0;
-  },undefined,error=>{clearTimeout(loadingTimeout);console.error('Orbit asset loading failed',error);fallback('互动模型未能加载，正在显示静态作品。');renderer.setAnimationLoop(null);});
+  },undefined,error=>{clearTimeout(loadingTimeout);console.error('Orbit asset loading failed',error);fallback('Could not load the 3D model. Showing a still preview.');renderer.setAnimationLoop(null);});
 
   const palettes={
     day:{key:0xfff3de,rim:0xd1efff,sky:0xffffff,ground:0x6c7361,exposure:1.1,environment:1.5},
@@ -108,7 +108,7 @@ try {
   motionButton.addEventListener('click',()=>{state.playing=!state.playing;updateMotionButton();});
   unfoldButton.addEventListener('click',()=>{
     state.unfolded=!state.unfolded;unfoldButton.setAttribute('aria-pressed',String(state.unfolded));
-    unfoldButton.innerHTML=state.unfolded?'合拢轨道 <span>↙</span>':'展开轨道 <span>↗</span>';
+    unfoldButton.innerHTML=state.unfolded?'Close orbits <span>↙</span>':'Expand orbits <span>↗</span>';
   });
   document.querySelector('#reset-view').addEventListener('click',()=>controls.reset());
   reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches){state.playing=false;updateMotionButton();}});
@@ -156,9 +156,9 @@ try {
   document.addEventListener('visibilitychange',()=>{
     previous=0;metrics.frameIntervals=[];renderer.setAnimationLoop(document.hidden||state.failed?null:frame);
   });
-  canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();renderer.setAnimationLoop(null);fallback('图形渲染已暂停，刷新页面可以重试。');});
+  canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();renderer.setAnimationLoop(null);fallback('Rendering paused. Refresh to try again.');});
   renderer.setAnimationLoop(frame);
 } catch(error) {
   console.error('Orbit renderer could not start',error);
-  fallback('当前浏览器无法启动 3D，正在显示静态作品。');
+  fallback('3D is unavailable in this browser. Showing a still preview.');
 }

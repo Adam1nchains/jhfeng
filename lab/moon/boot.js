@@ -10,7 +10,7 @@ function loadScene() {
   import(entry).catch(error => {
     console.error(error);
     document.querySelector('#loading').hidden = false;
-    document.querySelector('#loading h2').textContent = '加载失败，请刷新重试';
+    document.querySelector('#loading h2').textContent = 'Could not load. Please refresh.';
     document.querySelector('#load-progress').hidden = true;
   });
 }
