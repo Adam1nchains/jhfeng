@@ -5,6 +5,7 @@ import { PROFILES, QualityBudget, pixelRatioFor } from './lunar-quality.js';
 import { RockField } from './lunar-rocks.js';
 import { DustField } from './lunar-dust.js';
 import { createHiddenSuit, SUIT_ROCK_INDEX } from './lunar-suit.js';
+import { createBouquet } from './lunar-bouquet.js';
 
 const $ = s => document.querySelector(s), canvas = $('#moon');
 const desktop = matchMedia('(min-width: 820px) and (pointer: fine)');
@@ -84,6 +85,9 @@ async function init() {
   rockField.rocks.forEach(r => writeRock(r.id)); scene.add(rockMesh);
   const hiddenSuit = createHiddenSuit(rockField.rocks[SUIT_ROCK_INDEX], rockGeo, heightAt, START);
   hiddenSuit.group.visible = false; scene.add(hiddenSuit.group); collisionObjects.push(...hiddenSuit.colliders);
+  const bouquet = createBouquet(hiddenSuit, heightAt);
+  bouquet.group.visible = false; scene.add(bouquet.group); collisionObjects.push(bouquet.body.collider);
+  const contactResolver = { resolveContact: (rover, object, dt) => bouquet.body.resolveContact(rover, object) || rockField.resolveContact(rover, object, dt) };
   function syncRocks() {
     const dirty = rockField.takeDirty(); if (!dirty.length) return;
     if (dirty.includes(SUIT_ROCK_INDEX)) hiddenSuit.sync();
@@ -366,10 +370,12 @@ async function init() {
     if (!paused) {
       accumulator += dt;
       const input = { forward: keys.has('KeyW') || keys.has('ArrowUp'), reverse: keys.has('KeyS') || keys.has('ArrowDown'), left: keys.has('KeyA') || keys.has('ArrowLeft'), right: keys.has('KeyD') || keys.has('ArrowRight'), brake: keys.has('Space') };
-      while (accumulator >= fixed) { stepDrive(state, input, fixed, collisionObjects, rockField); rockField.step(fixed, state); dustField.step(fixed, state); accumulator -= fixed; }
+      while (accumulator >= fixed) { stepDrive(state, input, fixed, collisionObjects, contactResolver); rockField.step(fixed, state); bouquet.body.step(fixed, collisionObjects); dustField.step(fixed, state); accumulator -= fixed; }
       syncDust();
       syncRocks();
       hiddenSuit.group.visible = Math.hypot(state.x - hiddenSuit.group.position.x, state.z - hiddenSuit.group.position.z) < 70;
+      bouquet.sync();
+      bouquet.group.visible = Math.hypot(state.x - bouquet.body.position.x, state.z - bouquet.body.position.z) < 55;
       updateRover(); markTracks(state); updateCamera(dt); missionTick(dt);
     } else accumulator = 0;
     if (nowSeconds > noticeTimer) $('#notice').classList.remove('visible');
